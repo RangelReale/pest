@@ -44,7 +44,10 @@ class PestJSON extends Pest
      */
     public function post($url, $data, $headers = array())
     {
-        return parent::post($url, $this->jsonEncode($data), $headers);
+        if (!($data instanceof PestRawData))
+            $data = $this->jsonEncode($data);
+        
+        return parent::post($url, $data, $headers);
     }
 
     /**
@@ -57,7 +60,10 @@ class PestJSON extends Pest
      */
     public function put($url, $data, $headers = array())
     {
-        return parent::put($url, $this->jsonEncode($data), $headers);
+        if (!($data instanceof PestRawData))
+            $data = $this->jsonEncode($data);
+        
+        return parent::put($url, $data, $headers);
     }
 
     /**
@@ -182,6 +188,10 @@ class PestJSON extends Pest
      */
     public function processBody($body)
     {
+        if (isset($this->last_response['meta']['content_type']) && $this->last_response['meta']['content_type'] != 'application/json') {
+            return $body;
+        }
+        
         return $this->jsonDecode($body);
     }
 
@@ -192,11 +202,13 @@ class PestJSON extends Pest
      * @param string $url
      * @return resource
      */
-    protected function prepRequest($opts, $url)
+    protected function prepRequest($opts, $url, $data)
     {
-        $opts[CURLOPT_HTTPHEADER][] = 'Accept: application/json';
-        $opts[CURLOPT_HTTPHEADER][] = 'Content-Type: application/json';
-        return parent::prepRequest($opts, $url);
+        if (!($data instanceof PestRawData)) {
+            $opts[CURLOPT_HTTPHEADER][] = 'Accept: application/json';
+            $opts[CURLOPT_HTTPHEADER][] = 'Content-Type: application/json';
+        }
+        return parent::prepRequest($opts, $url, $data);
     }
 }
 
